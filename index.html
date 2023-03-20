@@ -29,14 +29,6 @@
     <textarea rows="2" cols="100"></textarea> <button id="import">Import</button>
   </p>
   <script>
-    /**
-     * We make a list of people.
-     * Each person has several attributes: an id, an optional description, and a pair ofof time-space positions.
-     * We create one, advance in time, and finish it.
-     * I need a button for going one second before and one second later.
-     * Add a textfield to export or import the data.
-     * Count the people
-     */
     let mode = 'start'
     let people = []
 
@@ -46,7 +38,6 @@
 
       p.setup = function () {
         p.createCanvas(400, 400)
-        // p.noCanvas()
 
         video = p.createVideo('2023-03-07_part58.mp4', () => {
           video.volume(0)
@@ -70,9 +61,7 @@
         p.resizeCanvas(video.width, video.height)
       }
 
-      /**
-       * Update the canvas (this code is run in a loop)
-       */
+
       p.draw = function () {
         p.background(220)
         let img = video.get()
@@ -83,22 +72,11 @@
 
       draw_people = function () {
         for (const person of people) {
-          if (person.start.t <= video.time() && video.time() <= person.end.t) {
-            p.push()
-            p.noFill()
-            p.stroke(255, 204, 0)
-            p.line(person.start.x * p.width, person.start.y * p.height, person.end.x * p.width, person.end.y * p.height)
-            const t0 = (video.time() - person.start.t) / (person.end.t - person.start.t)
-            p.circle(
-              p.lerp(person.start.x, person.end.x, t0) * p.width,
-              p.lerp(person.start.y, person.end.y, t0) * p.height,
-              10)
-            p.pop()
-          } else if (person.end.t === -1) {
+          if (Math.abs(person.t - video.time()) < 0.5) {
             p.push()
             p.noStroke()
             p.fill('rgba(255, 204, 0, 0.5)')
-            p.circle(person.start.x * p.width, person.start.y * p.height, 10)
+            p.circle(person.x * p.width, person.y * p.height, 10)
             p.pop()
           }
         }
@@ -108,36 +86,18 @@
         if (!(0 <= p.mouseX && p.mouseX <= p.width && 0 <= p.mouseY && p.mouseY <= p.height)) {
           return
         }
-        if (mode === 'start') {
-          const person = {
-            start: {
-              t: video.time(),
-              x: p.mouseX/p.width,
-              y: p.mouseY/p.height
-            },
-            end: {
-              t: -1,
-              x: -1,
-              y: -1
-            },
-          }
-          people.push(person)
-          mode = 'end'
-        } else {
-          people[people.length - 1].end = {
-            t: video.time(),
-              x: p.mouseX/p.width,
-              y: p.mouseY/p.height
-          }
-          mode = 'start'
-          document.querySelector('#manifestants').textContent = people.length
-          document.querySelector('textarea').value = JSON.stringify(people)
-          // console.log(JSON.stringify(people))
-
+        const person = {
+          t: video.time(),
+          x: p.mouseX / p.width,
+          y: p.mouseY / p.height
         }
+        people.push(person)
+        document.querySelector('#manifestants').textContent = people.length
+        document.querySelector('textarea').value = JSON.stringify(people)
+        // console.log(JSON.stringify(people))
       }
 
-      p.keyPressed = function() {
+      p.keyPressed = function () {
         if (p.keyCode === p.RIGHT_ARROW) {
           p.forward()
         } else if (p.keyCode === p.LEFT_ARROW) {
