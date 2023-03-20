@@ -4,9 +4,9 @@ Application web pour aider à compter les manifestants à la main.
 
 ## Installation
 
-Pour pouvoir importer la vidéo, il te faut héberger cette page sur un serveur web local ou pas.
+Pour pouvoir importer la vidéo, il te faut héberger cette page sur un serveur web (local ou pas).
 
-Télécharge ta vidéo depuis la [page web](https://www.irif.fr/~charbit/ComptageManifs/Comptage.html) du projet met le nom dans la ligne
+Télécharge ta vidéo depuis la [page web](https://www.irif.fr/~charbit/ComptageManifs/Comptage.html) du projet et met le nom du fichier dans la ligne
 
 ```javascript
 video = p.createVideo('2023-03-07_part58.mp4', () => {
@@ -21,7 +21,7 @@ set_video_width(1400)
 
 ## Utilisation
 
-Tu peux controller la vidéo avec les trois boutons ou avec touches `Left`, `Bottom` et `Right`, respectivement.
+Tu peux controller la vidéo avec les trois boutons ou avec les touches `Left`, `Bottom` et `Right`, respectivement.
 
 Clique sur la tête d'un manifestant quand il traverse la ligne rouge. Un marqueur sera affiché durant une seconde.
 
