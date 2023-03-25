@@ -12,16 +12,9 @@ Télécharge ta vidéo depuis la [page web](https://www.irif.fr/~charbit/Comptag
 video = p.createVideo('2023-03-07_part58.mp4', () => {
 ```
 
-Selon la taille de ton écran, tu peux modifier cette partie du code :
-
-```javascript
-// set_video_height(600)
-set_video_width(1400)
-```
-
 ## Utilisation
 
-Tu peux controller la vidéo avec les trois boutons ou avec les touches `Left`, `Bottom` et `Right`, respectivement.
+Tu peux contrôler la vidéo avec les trois boutons ou avec les touches `Left`, `Bottom` et `Right`, respectivement. Tu peux aussi régler l'offset horizontal et vertical, le zoom et la taille de la vidéo.
 
 Clique sur la tête d'un manifestant quand il traverse la ligne rouge. Un marqueur sera affiché durant une seconde.
 

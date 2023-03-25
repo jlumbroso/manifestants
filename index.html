@@ -7,7 +7,7 @@
   <title>Comptage manifestants</title>
   <meta name="author" content="Aldo Gonzalez-Lorenzo">
   <style>
-    #comptage {
+    #comptage canvas {
       cursor: crosshair;
     }
     .container {
@@ -18,6 +18,12 @@
     }
     p {
       margin: 2px;
+    }
+    input[type="number"] {
+      width: 3rem;
+    }
+    label {
+      cursor: help;
     }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/p5@1.1.9/lib/p5.js"></script>
@@ -30,18 +36,39 @@
       Time: <span id="time"></span>
     </p>  
     <p>
-      <button id="rewind">Rewind</button>
+      <button id="rewind" title="Go back 0.5 seconds">Rewind</button>
       <button id="pause">Pause</button>
       <button id="play">Play</button>
     </p>
   </div>
   <p>
+    <label title="Value between 0 and 1">
+      X offset
+      <input id="zoom_x" type="number" step= "0.01" value="0" min="0" max="1">
+    </label>
+    <label title="Value between 0 and 1">
+      Y offset
+      <input id="zoom_y" type="number" step= "0.01" value="0" min="0" max="1">
+    </label>
+    <label title="Value between 0 and 1">
+      Zoom
+      <input id="zoom_k" type="number" step= "0.1" value="1" min="0.1">
+    </label>
+    <label title="Value between 0 and 1">
+      Canvas size
+      <input id="zoom_cs" type="number" step= "0.1" value=".4" min="0.1">
+    </label>
+    <!-- <button id="zoom">Resize</button> -->
+  </p>
+  <p>
     Manifestants enregistrés : <span id="manifestants">0</span><br>
-    <textarea rows="2" cols="100"></textarea> <button id="import">Import</button>
+    <textarea rows="2" cols="100"></textarea> <button id="import">Import</button><br>
+    <small></small>
   </p>
   <script>
     let mode = 'start'
     let people = []
+    let zoom = {x: 0, y: 0, k: 1}
 
     const comptage = p => {
       /* Global variables */
@@ -54,29 +81,35 @@
           video.volume(0)
           video.play()
           video.pause()
-          // set_video_height(600)
-          set_video_width(1700)
+          p.set_canvas_size()
           video.hide() // hides the html video loader
         })
       }
 
       // Set the height of the video to a confortable size
-      set_video_height = function (h) {
-        video.size(h * (video.width / video.height), h)
-        p.resizeCanvas(video.width, video.height)
+      p.set_canvas_size = function () {
+        const size = Number(document.querySelector('input#zoom_cs').value)
+        p.resizeCanvas(size*video.width, size*video.height)
+        zoom.k = size
+        document.querySelector('#zoom_k').value = size
       }
 
       // Set the width of the video to a confortable size
-      set_video_width = function (w) {
-        video.size(w, w * (video.height / video.width))
-        p.resizeCanvas(video.width, video.height)
+      p.set_zoom = function () {
+        zoom.x = Number(document.querySelector('#zoom_x').value)
+        zoom.y = Number(document.querySelector('#zoom_y').value)
+        zoom.k = Number(document.querySelector('#zoom_k').value)
       }
 
 
       p.draw = function () {
-        p.background(220)
+        p.background(240)
         let img = video.get()
-        p.image(img, 0, 0) // redraws the video frame by frame
+        //p.image(img, 0, 0) // redraws the video frame by frame
+        p.image(
+          img, 
+          - zoom.x*img.width*zoom.k, - zoom.y*img.height*zoom.k, img.width*zoom.k, img.height*zoom.k,
+          ) // redraws the video frame by frame
         draw_people()
         document.querySelector('#time').textContent = `${p.nf(video.time(), 0, 2)} / ${video.duration()}`
       }
@@ -87,20 +120,38 @@
             p.push()
             p.noStroke()
             p.fill('rgba(0, 255, 0, 0.5)')
-            p.circle(person.x * p.width, person.y * p.height, 10)
+            const coord = coord_to_local(person)
+            if (p.dist(p.mouseX, p.mouseY, coord.x, coord.y) < 10) {
+              p.fill('rgba(0, 0, 255, 0.5)')
+              document.querySelector('small').textContent = "Hovered person: " + JSON.stringify(person)
+            }
+            p.circle(coord.x, coord.y, 10)
             p.pop()
           }
         }
+      }
+
+      coord_to_global = function(coord) {
+        const x = coord.x / (zoom.k*video.width ) + zoom.x
+        const y = coord.y / (zoom.k*video.height) + zoom.y
+        return {x: x, y: y}
+      }
+
+      coord_to_local = function(coord) {
+        const x = (coord.x - zoom.x) * video.width  * zoom.k
+        const y = (coord.y - zoom.y) * video.height * zoom.k
+        return {x: x, y: y}
       }
 
       p.mousePressed = function () {
         if (!(0 <= p.mouseX && p.mouseX <= p.width && 0 <= p.mouseY && p.mouseY <= p.height)) {
           return
         }
+        const coord = coord_to_global({x: p.mouseX, y: p.mouseY})
         const person = {
           t: video.time(),
-          x: p.mouseX / p.width,
-          y: p.mouseY / p.height
+          x: coord.x,
+          y: coord.y
         }
         people.push(person)
         document.querySelector('#manifestants').textContent = people.length
@@ -116,6 +167,10 @@
         } else if (p.keyCode === p.DOWN_ARROW) {
           p.pause()
         }
+      }
+
+      p.mouseOver = function() {
+        console.log(p.mouseX, p.mouseY)
       }
 
       p.forward = function () {
@@ -140,6 +195,11 @@
       people = JSON.parse(document.querySelector('textarea').value)
       document.querySelector('#manifestants').textContent = people.length
     })
+    // document.querySelector('button#zoom').addEventListener('click', compt.set_zoom)
+    for (const input of document.querySelectorAll('input[type="number"]')) {
+      input.addEventListener('input', compt.set_zoom)
+    }
+    document.querySelector('input#zoom_cs').addEventListener('input', compt.set_canvas_size)
   </script>
 </body>
 
