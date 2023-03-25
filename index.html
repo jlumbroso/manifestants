@@ -62,13 +62,14 @@
   </p>
   <p>
     Manifestants enregistrés : <span id="manifestants">0</span><br>
+    <small></small> <button id="back">Going back</button><br>
     <textarea rows="2" cols="100"></textarea> <button id="import">Import</button><br>
-    <small></small>
   </p>
   <script>
     let mode = 'start'
     let people = []
     let zoom = {x: 0, y: 0, k: 1}
+    let hovered_person_index
 
     const comptage = p => {
       /* Global variables */
@@ -115,20 +116,53 @@
       }
 
       draw_people = function () {
-        for (const person of people) {
+        for (let i = 0; i < people.length; i++) {
+          const person = people[i]
           if (Math.abs(person.t - video.time()) < 0.5) {
             p.push()
             p.noStroke()
             p.fill('rgba(0, 255, 0, 0.5)')
             const coord = coord_to_local(person)
+            if (person.back) {
+              p.fill('rgba(255, 0, 0, 0.5)')
+            }
             if (p.dist(p.mouseX, p.mouseY, coord.x, coord.y) < 10) {
               p.fill('rgba(0, 0, 255, 0.5)')
+              set_hovered(i)
+              hovered_person_index = i
               document.querySelector('small').textContent = "Hovered person: " + JSON.stringify(person)
             }
             p.circle(coord.x, coord.y, 10)
             p.pop()
           }
         }
+      }
+
+      set_hovered = function(i) {
+        hovered_person_index = i
+        document.querySelector('small').textContent = "Hovered person: " + JSON.stringify(people[i])
+        const button = document.querySelector('#back')
+        if (people[i].back) {
+          button.textContent = 'Going forwards'
+        } else {
+          button.textContent = 'Going back'
+        }
+      }
+
+      /**
+       * Label the last hovered person as going back or not
+       */
+      p.label_back = function () {
+        if (!people[hovered_person_index].back) {
+          people[hovered_person_index]['back'] = true
+          document.querySelector('#back').textContent = "Going forwards"
+        } else {
+          people[hovered_person_index]['back'] = false
+          document.querySelector('#back').textContent = "Going back"
+        }
+        document.querySelector('textarea').value = JSON.stringify(people)
+        count_manifestants()
+        document.querySelector('small').textContent = "Hovered person: " + JSON.stringify(people[hovered_person_index])
       }
 
       coord_to_global = function(coord) {
@@ -151,20 +185,20 @@
         const person = {
           t: video.time(),
           x: coord.x,
-          y: coord.y
+          y: coord.y,
+          back: false
         }
         people.push(person)
-        document.querySelector('#manifestants').textContent = people.length
+        count_manifestants()
         document.querySelector('textarea').value = JSON.stringify(people)
-        // console.log(JSON.stringify(people))
       }
 
       p.keyPressed = function () {
-        if (p.keyCode === p.RIGHT_ARROW) {
+        if (p.keyCode === p.RIGHT_ARROW || p.keyCode === 69) {
           p.forward()
-        } else if (p.keyCode === p.LEFT_ARROW) {
+        } else if (p.keyCode === p.LEFT_ARROW || p.keyCode === 65) {
           p.backward()
-        } else if (p.keyCode === p.DOWN_ARROW) {
+        } else if (p.keyCode === p.DOWN_ARROW || p.keyCode === 90) {
           p.pause()
         }
       }
@@ -184,22 +218,48 @@
       p.pause = function () {
         video.pause()
       }
+
+      p.import = function() {
+        people = JSON.parse(document.querySelector('textarea').value)
+
+        // Make sure that the data is in the correct format
+        for (let person of people) {
+          if (!('back' in person)) {
+            person.back = false
+          }
+        }
+        document.querySelector('textarea').value = JSON.stringify(people)
+
+        count_manifestants()
+      }
+
+      count_manifestants = function() {
+        let forward = 0
+        let backward = 0
+        for (const person of people) {
+          if (person.back) {
+            backward++
+          } else {
+            forward++
+          }
+        }
+        document.querySelector('#manifestants').textContent = `${forward} - ${backward} = ${forward-backward}`
+      }
     }
+
 
     let compt = new p5(comptage, 'comptage')
 
     document.querySelector('button#rewind').addEventListener('click', compt.backward)
     document.querySelector('button#pause').addEventListener('click', compt.pause)
     document.querySelector('button#play').addEventListener('click', compt.forward)
-    document.querySelector('button#import').addEventListener('click', (event) => {
-      people = JSON.parse(document.querySelector('textarea').value)
-      document.querySelector('#manifestants').textContent = people.length
-    })
+    document.querySelector('button#import').addEventListener('click', compt.import)
     // document.querySelector('button#zoom').addEventListener('click', compt.set_zoom)
     for (const input of document.querySelectorAll('input[type="number"]')) {
       input.addEventListener('input', compt.set_zoom)
     }
     document.querySelector('input#zoom_cs').addEventListener('input', compt.set_canvas_size)
+    document.querySelector('button#back').addEventListener('click', compt.label_back)
   </script>
 </body>
 
