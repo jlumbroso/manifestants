@@ -10,22 +10,33 @@
     #comptage {
       cursor: crosshair;
     }
+    .container {
+      display: flex
+    }
+    .container p:first-child {
+      width: 200px;
+    }
+    p {
+      margin: 2px;
+    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/p5@1.1.9/lib/p5.js"></script>
 </head>
 
 <body>
   <div id="comptage"></div>
+  <div class="container">
+    <p>
+      Time: <span id="time"></span>
+    </p>  
+    <p>
+      <button id="rewind">Rewind</button>
+      <button id="pause">Pause</button>
+      <button id="play">Play</button>
+    </p>
+  </div>
   <p>
-    Time: <span id="time"></span>
-  </p>
-  <p>
-    <button id="rewind">Rewind</button>
-    <button id="pause">Pause</button>
-    <button id="play">Play</button>
-  </p>
-  <p>
-    Manifestants enregistres : <span id="manifestants">0</span><br>
+    Manifestants enregistrés : <span id="manifestants">0</span><br>
     <textarea rows="2" cols="100"></textarea> <button id="import">Import</button>
   </p>
   <script>
@@ -44,7 +55,7 @@
           video.play()
           video.pause()
           // set_video_height(600)
-          set_video_width(1400)
+          set_video_width(1700)
           video.hide() // hides the html video loader
         })
       }
@@ -75,7 +86,7 @@
           if (Math.abs(person.t - video.time()) < 0.5) {
             p.push()
             p.noStroke()
-            p.fill('rgba(255, 204, 0, 0.5)')
+            p.fill('rgba(0, 255, 0, 0.5)')
             p.circle(person.x * p.width, person.y * p.height, 10)
             p.pop()
           }
