@@ -73,18 +73,29 @@
 
     const comptage = p => {
       /* Global variables */
-      let video
+      let video, input
 
       p.setup = function () {
         p.createCanvas(400, 400)
 
-        video = p.createVideo('2023-03-07_part58.mp4', () => {
-          video.volume(0)
-          video.play()
-          video.pause()
-          p.set_canvas_size()
-          video.hide() // hides the html video loader
+        let urlInput = new URLSearchParams(window.location.search).get("videoUrl")
+        console.log(urlInput)
+        if (urlInput) {
+          p.load_video(urlInput)
+        }
+        else {
+        input = p.createFileInput((file) => {
+          console.log(file);
+          if (file.type === 'video') {
+            p.load_video(file.data)
+            input.hide()
+          } else {
+            video = null;
+          }
         })
+        input.position(0, 0);
+      }
+        // this is where the video used to be loaded
       }
 
       // Set the height of the video to a confortable size
@@ -104,6 +115,7 @@
 
 
       p.draw = function () {
+        if (!video) return // assume video might not be loaded
         p.background(240)
         let img = video.get()
         //p.image(img, 0, 0) // redraws the video frame by frame
@@ -113,6 +125,17 @@
           ) // redraws the video frame by frame
         draw_people()
         document.querySelector('#time').textContent = `${p.nf(video.time(), 0, 2)} / ${video.duration()}`
+      }
+
+      p.load_video = function (src) {
+        console.log("Loading: ", src);
+        video = p.createVideo(src, () => {
+          video.volume(0)
+          video.play()
+          video.pause()
+          p.set_canvas_size()
+          video.hide() // hides the html video loader
+        })
       }
 
       draw_people = function () {
@@ -247,8 +270,8 @@
       }
     }
 
-
     let compt = new p5(comptage, 'comptage')
+
 
     document.querySelector('button#rewind').addEventListener('click', compt.backward)
     document.querySelector('button#pause').addEventListener('click', compt.pause)
